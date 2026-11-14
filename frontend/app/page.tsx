@@ -39,6 +39,28 @@ export default function SOCDashboard() {
     }
   };
 
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setLoading(true);
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+      const response = await fetch("http://127.0.0.1:8000/api/upload-eml", {
+        method: "POST",
+        body: formData,
+      });
+      const data = await response.json();
+      setResult(data.analysis);
+    } catch (err) {
+      console.error("EML upload failed:", err);
+      alert("Failed to parse .eml file on backend.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const downloadJSON = () => {
     if (!result) return;
     const blob = new Blob([JSON.stringify({ investigator: "Arti Saraswat", input: emailInput, analysis: result }, null, 2)], {
@@ -116,6 +138,21 @@ Compliance: ${result.blockchain_audit.compliance}
         {/* Left Column: Ingestion & Simulator Form */}
         <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-xl">
           <h2 className="text-lg font-semibold mb-4 text-blue-400">Inbound Mail Ingestion</h2>
+          
+          {/* EML File Upload Zone */}
+          <div className="mb-4 p-3 border border-dashed border-slate-700 rounded-lg bg-slate-950/60 text-center">
+            <label className="cursor-pointer block text-xs text-slate-300">
+              <span className="text-blue-400 font-semibold block mb-1">Upload Raw .EML Evidence File</span>
+              <span className="text-slate-500">Auto-extracts Received hops, SPF/DKIM &amp; body</span>
+              <input
+                type="file"
+                accept=".eml"
+                onChange={handleFileUpload}
+                className="hidden"
+              />
+            </label>
+          </div>
+
           <form onSubmit={handleAnalyze} className="space-y-4 text-sm">
             <div>
               <label className="block text-slate-400 mb-1">Sender Email</label>
@@ -280,36 +317,4 @@ Compliance: ${result.blockchain_audit.compliance}
       </div>
     </main>
   );
-}const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setLoading(true);
-    const formData = new FormData();
-    formData.append("file", file);
-
-    try {
-      const response = await fetch("http://127.0.0.1:8000/api/upload-eml", {
-        method: "POST",
-        body: formData,
-      });
-      const data = await response.json();
-      setResult(data.analysis);
-    } catch (err) {
-      console.error("EML upload failed:", err);
-      alert("Failed to parse .eml file on backend.");
-    } finally {
-      setLoading(false);
-    }
-  };
-  <div className="mb-4 p-3 border border-dashed border-slate-700 rounded-lg bg-slate-950/60 text-center">
-            <label className="cursor-pointer block text-xs text-slate-300">
-              <span className="text-blue-400 font-semibold block mb-1">Upload Raw .EML Evidence File</span>
-              <span className="text-slate-500">Auto-extracts Received hops, SPF/DKIM &amp; body</span>
-              <input></input>
-                type="file"
-                accept=".eml"
-                onChange={handleFileUpload}
-                className="hidden"
-              />
-            </label>
-          </div>
+}
